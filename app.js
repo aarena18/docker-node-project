@@ -112,6 +112,154 @@ app.post('/users', async (req, res) => {
   }
 });
 
+// === ANIMALS/PETS ENDPOINTS ===
+
+// READ: Get all animals
+app.get('/animals', async (req, res) => {
+  try {
+    const [rows] = await connection.query(`
+      SELECT a.*, u.name as owner_name, u.email as owner_email 
+      FROM animals a 
+      LEFT JOIN users u ON a.user_id = u.id
+    `);
+    res.json({ count: rows.length, animals: rows });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// READ: Get available animals (not adopted)
+app.get('/animals/available', async (req, res) => {
+  try {
+    const [rows] = await connection.query('SELECT * FROM animals WHERE user_id IS NULL');
+    res.json({ count: rows.length, animals: rows });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// READ: Get animal by ID
+app.get('/animals/:id', async (req, res) => {
+  try {
+    const [rows] = await connection.query(`
+      SELECT a.*, u.name as owner_name, u.email as owner_email 
+      FROM animals a 
+      LEFT JOIN users u ON a.user_id = u.id 
+      WHERE a.id = ?
+    `, [req.params.id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Animal not found' });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// READ: Get user's pets
+app.get('/users/:id/pets', async (req, res) => {
+  try {
+    const [rows] = await connection.query(
+      'SELECT * FROM animals WHERE user_id = ?',
+      [req.params.id]
+    );
+    res.json({ count: rows.length, pets: rows });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// WRITE: Create new animal
+app.post('/animals', async (req, res) => {
+  try {
+    const { name, species, age } = req.body;
+    if (!name || !species) {
+      return res.status(400).json({ error: 'Name and species are required' });
+    }
+    
+    const [result] = await connection.query(
+      'INSERT INTO animals (name, species, age) VALUES (?, ?, ?)',
+      [name, species, age || null]
+    );
+    
+    res.status(201).json({
+      message: 'Animal created successfully',
+      animal: { id: result.insertId, name, species, age }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// WRITE: Adopt an animal (assign to user)
+app.post('/animals/:animalId/adopt', async (req, res) => {
+  try {
+    const { animalId } = req.params;
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    // Check if user exists
+    const [users] = await connection.query('SELECT * FROM users WHERE id = ?', [userId]);
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Check if animal exists and is available
+    const [animals] = await connection.query('SELECT * FROM animals WHERE id = ?', [animalId]);
+    if (animals.length === 0) {
+      return res.status(404).json({ error: 'Animal not found' });
+    }
+    if (animals[0].user_id !== null) {
+      return res.status(400).json({ error: 'Animal is already adopted' });
+    }
+    
+    // Adopt the animal
+    await connection.query(
+      'UPDATE animals SET user_id = ?, adopted_at = NOW() WHERE id = ?',
+      [userId, animalId]
+    );
+    
+    res.json({
+      message: 'Animal adopted successfully',
+      animal: { id: animalId, owner: users[0].name }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// WRITE: Release an animal (remove from user)
+app.post('/animals/:animalId/release', async (req, res) => {
+  try {
+    const { animalId } = req.params;
+    
+    // Check if animal exists
+    const [animals] = await connection.query('SELECT * FROM animals WHERE id = ?', [animalId]);
+    if (animals.length === 0) {
+      return res.status(404).json({ error: 'Animal not found' });
+    }
+    if (animals[0].user_id === null) {
+      return res.status(400).json({ error: 'Animal is not adopted' });
+    }
+    
+    // Release the animal
+    await connection.query(
+      'UPDATE animals SET user_id = NULL, adopted_at = NULL WHERE id = ?',
+      [animalId]
+    );
+    
+    res.json({
+      message: 'Animal released successfully',
+      animal: { id: animalId, name: animals[0].name }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 
 // Start server
