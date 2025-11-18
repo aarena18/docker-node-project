@@ -1,157 +1,177 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="index.css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="index.css" />
     <title>SPA Adoption - Animaux disponibles</title>
-</head>
-<body>
+  </head>
+  <body>
     <header>
-        <nav>
-            <a href="index.html" class="logo">🐾 SPA Adoption</a>
-            <ul class="nav-links">
-                <li><a href="index.html">Animaux</a></li>
-                <li><a href="profile.html" id="profileLink" class="hidden">Mon Profil</a></li>
-            </ul>
-            <div class="user-info">
-                <span id="userName"></span>
-                <a href="connexion.html" id="loginBtn" class="btn btn-primary">Se connecter</a>
-                <button id="logoutBtn" class="btn btn-outline hidden">Déconnexion</button>
-            </div>
-        </nav>
+      <nav>
+        <a href="index.html" class="logo">Refuge de l'IIM 🐾</a>
+        <ul class="nav-links">
+          <li><a href="index.html">Animaux</a></li>
+          <li>
+            <a href="profile.html" id="profileLink" class="hidden"
+              >Mon Profil</a
+            >
+          </li>
+        </ul>
+        <div class="user-info">
+          <span id="userName"></span>
+          <a href="connexion.html" id="loginBtn" class="btn btn-primary"
+            >Se connecter</a
+          >
+          <button id="logoutBtn" class="btn btn-outline hidden">
+            Déconnexion
+          </button>
+        </div>
+      </nav>
     </header>
 
     <main>
-        <div class="hero">
-            <h1>Bienvenue sur SPA Adoption</h1>
-            <p>Trouvez votre nouveau compagnon parmi nos animaux à adopter</p>
-        </div>
+      <div class="hero">
+        <h1>Bienvenue au refuge de l'IIM</h1>
+        <p>Trouvez votre nouveau compagnon parmi nos animaux à adopter</p>
+      </div>
 
-        <div id="message"></div>
+      <div id="message"></div>
 
-        <div id="animalsContainer">
-            <div class="loading">Chargement des animaux...</div>
-        </div>
+      <div id="animalsContainer">
+        <div class="loading">Chargement des animaux...</div>
+      </div>
     </main>
 
     <script>
-        const API_URL = 'http://localhost:3000';
-        let currentUser = null;
+      const API_URL = "http://localhost:3000";
+      let currentUser = null;
 
-        // Check if user is logged in
-        function checkAuth() {
-            const userStr = localStorage.getItem('currentUser');
-            if (userStr) {
-                currentUser = JSON.parse(userStr);
-                document.getElementById('userName').textContent = `Bonjour, ${currentUser.name}`;
-                document.getElementById('loginBtn').classList.add('hidden');
-                document.getElementById('logoutBtn').classList.remove('hidden');
-                document.getElementById('profileLink').classList.remove('hidden');
-            }
+      // Check if user is logged in
+      function checkAuth() {
+        const userStr = localStorage.getItem("currentUser");
+        if (userStr) {
+          currentUser = JSON.parse(userStr);
+          document.getElementById(
+            "userName"
+          ).textContent = `Bonjour, ${currentUser.name}`;
+          document.getElementById("loginBtn").classList.add("hidden");
+          document.getElementById("logoutBtn").classList.remove("hidden");
+          document.getElementById("profileLink").classList.remove("hidden");
+        }
+      }
+
+      // Logout
+      document.getElementById("logoutBtn").addEventListener("click", () => {
+        localStorage.removeItem("currentUser");
+        window.location.reload();
+      });
+
+      // Load animals
+      async function loadAnimals() {
+        try {
+          const response = await fetch(`${API_URL}/animals/available`);
+          const data = await response.json();
+          displayAnimals(data.animals);
+        } catch (error) {
+          document.getElementById("animalsContainer").innerHTML =
+            '<div class="message error">Erreur lors du chargement des animaux</div>';
+        }
+      }
+
+      // Display animals
+      function displayAnimals(animals) {
+        const container = document.getElementById("animalsContainer");
+
+        if (animals.length === 0) {
+          container.innerHTML =
+            '<p class="loading">Aucun animal disponible pour le moment.</p>';
+          return;
         }
 
-        // Logout
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            localStorage.removeItem('currentUser');
-            window.location.reload();
-        });
+        const grid = document.createElement("div");
+        grid.className = "animals-grid";
 
-        // Load animals
-        async function loadAnimals() {
-            try {
-                const response = await fetch(`${API_URL}/animals/available`);
-                const data = await response.json();
-                displayAnimals(data.animals);
-            } catch (error) {
-                document.getElementById('animalsContainer').innerHTML = 
-                    '<div class="message error">Erreur lors du chargement des animaux</div>';
-            }
-        }
-
-        // Display animals
-        function displayAnimals(animals) {
-            const container = document.getElementById('animalsContainer');
-            
-            if (animals.length === 0) {
-                container.innerHTML = '<p class="loading">Aucun animal disponible pour le moment.</p>';
-                return;
-            }
-
-            const grid = document.createElement('div');
-            grid.className = 'animals-grid';
-
-            animals.forEach(animal => {
-                const card = document.createElement('div');
-                card.className = 'animal-card';
-                card.innerHTML = `
-                    <img src="${animal.image || 'https://via.placeholder.com/300x250?text=Photo+non+disponible'}" 
+        animals.forEach((animal) => {
+          const card = document.createElement("div");
+          card.className = "animal-card";
+          card.innerHTML = `
+                    <img src="${
+                      animal.image ||
+                      "https://via.placeholder.com/300x250?text=Photo+non+disponible"
+                    }" 
                          alt="${animal.name}" 
                          onerror="this.src='https://via.placeholder.com/300x250?text=Photo+non+disponible'">
                     <div class="animal-info">
                         <h3>${animal.name}</h3>
                         <p class="animal-species">${animal.species}</p>
-                        <p class="animal-description">${animal.description || 'Aucune description disponible'}</p>
+                        <p class="animal-description">${
+                          animal.description || "Aucune description disponible"
+                        }</p>
                         <div class="animal-actions">
-                            ${currentUser ? 
-                                `<button class="btn btn-secondary" onclick="adoptAnimal(${animal.id}, '${animal.name}')">Adopter</button>` : 
-                                `<a href="connexion.html" class="btn btn-outline">Connectez-vous pour adopter</a>`
+                            ${
+                              currentUser
+                                ? `<button class="btn btn-secondary" onclick="adoptAnimal(${animal.id}, '${animal.name}')">Adopter</button>`
+                                : `<a href="connexion.html" class="btn btn-outline">Connectez-vous pour adopter</a>`
                             }
                         </div>
                     </div>
                 `;
-                grid.appendChild(card);
-            });
+          grid.appendChild(card);
+        });
 
-            container.innerHTML = '';
-            container.appendChild(grid);
+        container.innerHTML = "";
+        container.appendChild(grid);
+      }
+
+      // Adopt animal
+      async function adoptAnimal(animalId, animalName) {
+        if (!currentUser) {
+          window.location.href = "connexion.html";
+          return;
         }
 
-        // Adopt animal
-        async function adoptAnimal(animalId, animalName) {
-            if (!currentUser) {
-                window.location.href = 'connexion.html';
-                return;
-            }
+        try {
+          const response = await fetch(`${API_URL}/animals/${animalId}/adopt`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ userId: currentUser.id }),
+          });
 
-            try {
-                const response = await fetch(`${API_URL}/animals/${animalId}/adopt`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ userId: currentUser.id })
-                });
+          const data = await response.json();
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    showMessage(`Félicitations ! Vous avez adopté ${animalName} !`, 'success');
-                    setTimeout(() => {
-                        loadAnimals();
-                    }, 1500);
-                } else {
-                    showMessage(data.error || 'Erreur lors de l\'adoption', 'error');
-                }
-            } catch (error) {
-                showMessage('Erreur de connexion au serveur', 'error');
-            }
-        }
-
-        function showMessage(text, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+          if (response.ok) {
+            showMessage(
+              `Félicitations ! Vous avez adopté ${animalName} !`,
+              "success"
+            );
             setTimeout(() => {
-                messageDiv.innerHTML = '';
-            }, 5000);
+              loadAnimals();
+            }, 1500);
+          } else {
+            showMessage(data.error || "Erreur lors de l'adoption", "error");
+          }
+        } catch (error) {
+          showMessage("Erreur de connexion au serveur", "error");
         }
+      }
 
-        // Initialize
-        checkAuth();
-        loadAnimals();
+      function showMessage(text, type) {
+        const messageDiv = document.getElementById("message");
+        messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+        setTimeout(() => {
+          messageDiv.innerHTML = "";
+        }, 5000);
+      }
 
-        // Make adoptAnimal available globally
-        window.adoptAnimal = adoptAnimal;
+      // Initialize
+      checkAuth();
+      loadAnimals();
+
+      // Make adoptAnimal available globally
+      window.adoptAnimal = adoptAnimal;
     </script>
-</body>
+  </body>
 </html>
