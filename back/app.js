@@ -4,14 +4,26 @@ const path = require('path');
 
 const app = express();
 
-// Set up EJS as view engine
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+// Enable CORS for frontend
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
-// Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve frontend static files from parent directory
+app.use(express.static(path.join(__dirname, '..', 'front')));
+
+// Set up EJS as view engine (for backward compatibility)
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 // Database configuration
 const dbConfig = {
@@ -34,15 +46,7 @@ async function initDB() {
   }
 }
 
-// Root endpoint - render home page
-app.get('/', async (req, res) => {
-  try {
-    const [users] = await connection.query('SELECT * FROM users');
-    res.render('index', { users });
-  } catch (error) {
-    res.render('index', { users: [], error: error.message });
-  }
-});
+// Root endpoint is now served as static index.html from front/ directory
 
 // API endpoint (for JSON responses)
 app.get('/api', (req, res) => {

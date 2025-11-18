@@ -19,7 +19,9 @@ services:
       retries: 10
 
   app:
-    build: ./back
+    build:
+      context: .
+      dockerfile: ./back/Dockerfile
     container_name: node-app
     restart: always
     ports:
@@ -33,7 +35,8 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ./back/app.js:/usr/src/app/app.js
+      - ./back/app.js:/usr/src/app/back/app.js
+      - ./front:/usr/src/app/front
 
 volumes:
   db-data:
