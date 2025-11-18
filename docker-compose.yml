@@ -12,14 +12,14 @@ services:
       - "3306:3306"
     volumes:
       - db-data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./back/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 20s
       retries: 10
 
   app:
-    build: .
+    build: ./back
     container_name: node-app
     restart: always
     ports:
@@ -33,7 +33,7 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ./app.js:/usr/src/app/app.js
+      - ./back/app.js:/usr/src/app/app.js
 
 volumes:
   db-data:

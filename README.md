@@ -120,12 +120,20 @@ curl -X POST http://localhost:3000/users \
 
 ```
 docker-db-app/
-├── app.js              # Application Node.js/Express
-├── package.json        # Dépendances Node.js
-├── Dockerfile          # Image Docker pour l'app
-├── docker-compose.yml  # Configuration des services
-├── init.sql           # Script d'initialisation DB
-└── README.md          # Documentation
+├── front/                  # Frontend files
+│   ├── index.html         # Main page
+│   ├── index.css          # Styles
+│   ├── index.js           # Frontend JavaScript
+│   └── connexion.html     # Login/signup page
+├── back/                  # Backend files
+│   ├── app.js             # Node.js/Express application
+│   ├── package.json       # Node.js dependencies
+│   ├── Dockerfile         # Docker image for the app
+│   ├── init.sql          # Database initialization script
+│   ├── views/            # EJS templates
+│   └── public/           # Static assets
+├── docker-compose.yml     # Service configuration
+└── README.md             # Documentation
 ```
 
 ## 🔧 Configuration

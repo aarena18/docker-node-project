@@ -51,7 +51,13 @@ app.get('/api', (req, res) => {
     endpoints: {
       'GET /users': 'Get all users',
       'GET /users/:id': 'Get user by ID',
-      'POST /users': 'Create a new user (body: {name, email})',
+      'POST /users': 'Create a new user (body: {name, email, password})',
+      'GET /animals': 'Get all animals',
+      'GET /animals/available': 'Get available animals',
+      'GET /animals/:id': 'Get animal by ID',
+      'POST /animals': 'Create a new animal',
+      'POST /animals/:animalId/adopt': 'Adopt an animal',
+      'POST /animals/:animalId/release': 'Release an animal',
       'GET /health': 'Health check'
     }
   });
@@ -67,10 +73,12 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// === USER ENDPOINTS ===
+
 // READ: Get all users
 app.get('/users', async (req, res) => {
   try {
-    const [rows] = await connection.query('SELECT * FROM users');
+    const [rows] = await connection.query('SELECT id, name, email, created_at FROM users');
     res.json({ count: rows.length, users: rows });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -80,7 +88,7 @@ app.get('/users', async (req, res) => {
 // READ: Get user by ID
 app.get('/users/:id', async (req, res) => {
   try {
-    const [rows] = await connection.query('SELECT * FROM users WHERE id = ?', [req.params.id]);
+    const [rows] = await connection.query('SELECT id, name, email, created_at FROM users WHERE id = ?', [req.params.id]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -93,14 +101,14 @@ app.get('/users/:id', async (req, res) => {
 // WRITE: Create new user
 app.post('/users', async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, password } = req.body;
     if (!name || !email) {
       return res.status(400).json({ error: 'Name and email are required' });
     }
     
     const [result] = await connection.query(
-      'INSERT INTO users (name, email) VALUES (?, ?)',
-      [name, email]
+      'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
+      [name, email, password || null]
     );
     
     res.status(201).json({
@@ -172,19 +180,19 @@ app.get('/users/:id/pets', async (req, res) => {
 // WRITE: Create new animal
 app.post('/animals', async (req, res) => {
   try {
-    const { name, species, age } = req.body;
+    const { name, species, description, image } = req.body;
     if (!name || !species) {
       return res.status(400).json({ error: 'Name and species are required' });
     }
     
     const [result] = await connection.query(
-      'INSERT INTO animals (name, species, age) VALUES (?, ?, ?)',
-      [name, species, age || null]
+      'INSERT INTO animals (name, species, description, image) VALUES (?, ?, ?, ?)',
+      [name, species, description || null, image || null]
     );
     
     res.status(201).json({
       message: 'Animal created successfully',
-      animal: { id: result.insertId, name, species, age }
+      animal: { id: result.insertId, name, species, description, image }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
