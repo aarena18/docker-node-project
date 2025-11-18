@@ -1,43 +1,7 @@
-# Node modules (will be installed in container)
-node_modules/
-npm-debug.log*
-
-# Git
-.git/
+node_modules
+npm-debug.log
+.git
 .gitignore
-
-# Docker files
-Dockerfile
-docker-compose.yml
-.dockerignore
-
-# Documentation
 README.md
-*.md
+.env
 
-# Logs
-logs/
-*.log
-
-# Environment files
-.env.local
-.env.*.local
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Database volumes
-db-data/
-
-# Test files
-test/
-tests/
-*.test.js
-*.spec.js
