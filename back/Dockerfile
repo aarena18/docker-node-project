@@ -7,6 +7,8 @@ COPY package*.json ./
 RUN npm install
 
 COPY app.js .
+COPY views ./views
+COPY public ./public
 
 EXPOSE 3000
 

@@ -3,11 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login / Sign up</title>
+    <title>Connexion - SPA Adoption</title>
+    <link rel="stylesheet" href="index.css">
 </head>
 <body>
-    <div>
-        
-    </div>
+    <header>
+        <nav>
+            <a href="index.html" class="logo">🐾 SPA Adoption</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="form-container">
+            <div id="message"></div>
+            
+            <!-- Login Form -->
+            <div id="loginForm">
+                <h2 style="text-align: center; margin-bottom: 2rem;">Connexion</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Mot de passe</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Se connecter</button>
+                </form>
+                <div class="form-toggle">
+                    <p>Pas encore de compte ? <a href="#" id="showSignup">Créer un compte</a></p>
+                </div>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signupForm" class="hidden">
+                <h2 style="text-align: center; margin-bottom: 2rem;">Créer un compte</h2>
+                <form id="signup-form">
+                    <div class="form-group">
+                        <label for="signup-name">Nom complet</label>
+                        <input type="text" id="signup-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email</label>
+                        <input type="email" id="signup-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Mot de passe</label>
+                        <input type="password" id="signup-password" required minlength="6">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">S'inscrire</button>
+                </form>
+                <div class="form-toggle">
+                    <p>Déjà un compte ? <a href="#" id="showLogin">Se connecter</a></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="index.js"></script>
+    <script>
+        // Toggle between login and signup forms
+        document.getElementById('showSignup').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('signupForm').classList.remove('hidden');
+            document.getElementById('message').innerHTML = '';
+        });
+
+        document.getElementById('showLogin').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('signupForm').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('message').innerHTML = '';
+        });
+
+        // Handle login
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const response = await fetch('http://localhost:3000/users');
+                const data = await response.json();
+                
+                const user = data.users.find(u => u.email === email);
+                
+                if (user && user.password === password) {
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    showMessage('Connexion réussie !', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                } else {
+                    showMessage('Email ou mot de passe incorrect', 'error');
+                }
+            } catch (error) {
+                showMessage('Erreur de connexion au serveur', 'error');
+            }
+        });
+
+        // Handle signup
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+
+            try {
+                const response = await fetch('http://localhost:3000/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('Compte créé avec succès ! Connexion...', 'success');
+                    // Auto-login after signup
+                    const user = { id: data.user.id, name, email, password };
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    showMessage(data.error || 'Erreur lors de la création du compte', 'error');
+                }
+            } catch (error) {
+                showMessage('Erreur de connexion au serveur', 'error');
+            }
+        });
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+        }
+    </script>
 </body>
 </html>
