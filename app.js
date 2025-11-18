@@ -1,8 +1,17 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
+const path = require('path');
 
 const app = express();
+
+// Set up EJS as view engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Database configuration
 const dbConfig = {
@@ -25,8 +34,18 @@ async function initDB() {
   }
 }
 
-// Root endpoint
-app.get('/', (req, res) => {
+// Root endpoint - render home page
+app.get('/', async (req, res) => {
+  try {
+    const [users] = await connection.query('SELECT * FROM users');
+    res.render('index', { users });
+  } catch (error) {
+    res.render('index', { users: [], error: error.message });
+  }
+});
+
+// API endpoint (for JSON responses)
+app.get('/api', (req, res) => {
   res.json({
     message: 'Docker DB App - Node.js + MySQL',
     endpoints: {
